@@ -42,7 +42,7 @@ jobs:
           location: "${{ env.GKE_ZONE }}"
 
       - name: Build
-        run: docker build . -t "gcr.io/$PROJECT_ID/$IMAGE:$BRANCH-$GITHUB_SHA" .
+        run: docker build . -t "gcr.io/$PROJECT_ID/$IMAGE:$BRANCH-$GITHUB_SHA"
 
       - name: Publish
         run: docker push "gcr.io/$PROJECT_ID/$IMAGE:$BRANCH-$GITHUB_SHA"
