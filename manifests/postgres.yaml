@@ -8,11 +8,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: postgresapp
+      app: postgres
   template:
     metadata:
       labels:
-        app: postgresapp
+        app: postgres
     spec:
       containers:
         - name: postgres
@@ -26,12 +26,12 @@ spec:
           volumeMounts:
             - name: postgres-data-storage
               mountPath: /var/lib/postgresql/data
+              subPath: postgres
   volumeClaimTemplates:
     - metadata:
         name: postgres-data-storage
       spec:
-        accessModes: ["ReadWriteOnce"]
-        storageClassName: local-path
+        accessModes: ["ReadWriteMany"]
         resources:
           requests:
             storage: 100Mi
@@ -41,12 +41,10 @@ kind: Service
 metadata:
   name: postgres-svc
   namespace: todo
-  labels:
-    app: postgres
 spec:
   ports:
     - port: 5432
       name: web
   clusterIP: None
   selector:
-    app: postgresapp
+    app: postgres
