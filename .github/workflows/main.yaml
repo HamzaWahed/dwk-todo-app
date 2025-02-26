@@ -55,12 +55,13 @@ jobs:
           NAMESPACE=$BRANCH
           if [ "$BRANCH" = "main" ]; then
             NAMESPACE=default
+          else
+            kubectl create namespace $NAMESPACE || true
           fi
 
-          kubectl create namespace $NAMESPACE || true
           kubectl config set-context --current --namespace=$NAMESPACE
           kustomize edit set namespace $NAMESPACE
           kustomize edit set image PROJECT/IMAGE=gcr.io/$PROJECT_ID/$IMAGE:$BRANCH-$GITHUB_SHA
           kustomize build . | kubectl apply -f -
-          kubectl rollout status deployment $SERVICE -n todo
-          kubectl get services -o wide -n todo
+          kubectl rollout status deployment $SERVICE
+          kubectl get services -o wide
