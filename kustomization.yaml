@@ -1,5 +1,6 @@
 resources:
   - manifests/configmap.yaml
+  - manifests/postgres-init.yaml
   - manifests/secret.yaml
   - manifests/postgres.yaml
   - manifests/persistentvolumeclaim.yaml

@@ -50,5 +50,5 @@ spec:
               mountPath: /usr/src/app/img
           resources:
             limits:
-              memory: 128Mi
-              cpu: "0.1"
+              memory: 500Mi
+              cpu: "0.5"

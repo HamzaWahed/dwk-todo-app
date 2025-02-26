@@ -1,6 +1,8 @@
 require("dotenv").config();
 const Koa = require("koa");
 const Router = require("koa-router");
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const { Client } = require("pg");
 const path = require("path");
 const fs = require("fs");
