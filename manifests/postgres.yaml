@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: postgres-stset
+  name: postgres-ss
   namespace: todo
 spec:
   serviceName: postgres-svc
@@ -31,7 +31,7 @@ spec:
     - metadata:
         name: postgres-data-storage
       spec:
-        accessModes: ["ReadWriteMany"]
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 100Mi
