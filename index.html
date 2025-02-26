@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Koa.js with HTMX</title>
+    <script
+      src="https://unpkg.com/htmx.org@2.0.4"
+      integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <img src="/img/image.jpg" width="700" />
+    <form hx-post="/todos" hx-target="#item-list" hx-swap="innerHTML">
+      <input
+        type="text"
+        name="item"
+        maxlength="140"
+        placeholder="Add new todo"
+        required
+      />
+      <button type="submit">Create TODO</button>
+    </form>
+    <ul
+      id="item-list"
+      hx-get="/todos"
+      hx-trigger="load"
+      hx-swap="innerHTML"
+    ></ul>
+  </body>
+</html>

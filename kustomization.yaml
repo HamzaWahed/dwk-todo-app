@@ -1,0 +1,10 @@
+resources:
+  - manifests/configmap.yaml
+  - manifests/secret.yaml
+  - manifests/postgres.yaml
+  - manifests/persistentvolumeclaim.yaml
+  - manifests/service.yaml
+  - manifests/ingress.yaml
+  - manifests/deployment.yaml
+images:
+  - name: PROJECT/IMAGE

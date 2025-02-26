@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-app-dep
+  namespace: todo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-app
+  template:
+    metadata:
+      labels:
+        app: todo-app
+    spec:
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: image-pvc
+      containers:
+        - name: todo-app
+          image: PROJECT/IMAGE
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-database-password
+                  key: POSTGRES_PASSWORD
+            - name: USER
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap
+                  key: user
+            - name: HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap
+                  key: host
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap
+                  key: port
+            - name: DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap
+                  key: database
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /usr/src/app/img
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: "0.1"
