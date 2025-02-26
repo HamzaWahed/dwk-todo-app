@@ -1,0 +1,44 @@
+name: Remove Namespace on Branch Deletion
+
+on:
+  delete:
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: dwk-cluster
+  GKE_ZONE: europe-north1-b
+  IMAGE: todo
+  SERVICE: todo-app-dep
+  BRANCH: ${{ github.ref_name }}
+
+jobs:
+  delete-namespace:
+    name: Delete Namespace
+    environment: Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          - credentials_json: "${{ secrets.GKE_SA_KEY }}"
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Use gcloud CLI
+        run: gcloud info
+
+      - run: gcloud --quiet auth configure-docker
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          - cluster_name = "${{ GKE_CLUSTER }}"
+          - project_id = "${{ PROJECT_ID }}"
+          - location = "${{ GKE_ZONE }}"
+
+      - name: Delete Namespace
+        run: kubectl delete -k . --namespace=$BRANCH
