@@ -9,3 +9,4 @@ resources:
   - manifests/deployment.yaml
 images:
   - name: PROJECT/IMAGE
+    newName: hzd454/todo-app:1.3

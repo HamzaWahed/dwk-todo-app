@@ -3,7 +3,7 @@ const Koa = require("koa");
 const Router = require("koa-router");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
-const { Client } = require("pg");
+const { Pool } = require("pg");
 const path = require("path");
 const fs = require("fs");
 const { writeFile, readFile } = fs.promises;
@@ -15,24 +15,13 @@ const router = new Router();
 const imagePath = path.join(__dirname, "img/image.jpg");
 const PORT = process.env.PORT || 3000;
 
-const client = new Client({
+const pool = new Pool({
   user: process.env.USER,
   password: process.env.POSTGRES_PASSWORD,
   host: process.env.HOST,
   port: process.env.POSTGRES_PORT,
   database: process.env.DATABASE,
 });
-
-async function connectDB() {
-  try {
-    await client.connect();
-    console.log("Connected to PostgreSQL");
-  } catch (err) {
-    console.error("Failed to connect to PostgreSQL:", err);
-  }
-}
-
-connectDB();
 
 downloadImage = async (url, filePath) => {
   try {
@@ -54,6 +43,17 @@ setInterval(() => {
   downloadImage("https://picsum.photos/1200", imagePath).catch(console.error);
 }, 3600000);
 
+router.get("/healthz", async (ctx) => {
+  try {
+    await pool.query("SELECT 1");
+    ctx.status = 200;
+    console.log("app is healthy");
+  } catch (err) {
+    ctx.status = 503;
+    console.log("app health check failed");
+  }
+});
+
 router.get("/", async (ctx) => {
   ctx.type = "html";
   ctx.body = await readFile(path.join(__dirname, "index.html"), "utf8");
@@ -61,7 +61,7 @@ router.get("/", async (ctx) => {
 
 router.get("/todos", async (ctx) => {
   ctx.type = "html";
-  const todos = await client.query("SELECT * FROM todo");
+  const todos = await pool.query("SELECT * FROM todo");
   ctx.body = todos.rows.map((todo) => `<li>${todo.title}</li>`).join("");
 });
 
@@ -79,8 +79,8 @@ router.post("/todos", async (ctx) => {
   }
 
   console.log(newTodo);
-  await client.query("INSERT INTO todo(title) VALUES($1)", [newTodo]);
-  const todos = await client.query("SELECT * FROM todo");
+  await pool.query("INSERT INTO todo(title) VALUES($1)", [newTodo]);
+  const todos = await pool.query("SELECT * FROM todo");
   ctx.type = "html";
   ctx.body = todos.rows.map((todo) => `<li>${todo.title}</li>`).join("");
 });

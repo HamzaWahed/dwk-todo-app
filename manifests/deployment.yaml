@@ -19,6 +19,18 @@ spec:
       containers:
         - name: todo-app
           image: PROJECT/IMAGE
+          readinessProbe:
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            httpGet:
+              path: /healthz
+              port: 3000
+          livenessProbe:
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            httpGet:
+              path: /healthz
+              port: 3000
           env:
             - name: POSTGRES_PASSWORD
               valueFrom:
