@@ -6,6 +6,6 @@ data:
   init-db.sql: |
     CREATE DATABASE mydb;
     \c mydb
-    CREATE TABLE todo (id SERIAL PRIMARY KEY, title TEXT);
-    INSERT INTO todo(title) VALUES ('feed the dog');
-    INSERT INTO todo(title) VALUES ('feed the cat')
+    CREATE TABLE todo (id SERIAL PRIMARY KEY, title TEXT, done BOOLEAN);
+    INSERT INTO todo(title, done) VALUES ('feed the dog', false);
+    INSERT INTO todo(title, done) VALUES ('feed the cat', false);
