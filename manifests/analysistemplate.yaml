@@ -1,0 +1,14 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: cpu-usage-rate
+spec:
+  metrics:
+    - name: cpu-usage-rate
+      initialDelay: 5s
+      successCondition: result < 50
+      provider:
+        prometheus:
+          address: http://kube-prometheus-stack-1740-prometheus.prometheus.svc.cluster:9090
+          query: |
+            sum(rate(container_cpu_usage_seconds_total{namespace="default", container!="POD"}[5m])) / sum(machine_cpu_cores) * 100
