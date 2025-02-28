@@ -62,7 +62,22 @@ router.get("/", async (ctx) => {
 router.get("/todos", async (ctx) => {
   ctx.type = "html";
   const todos = await pool.query("SELECT * FROM todo");
-  ctx.body = todos.rows.map((todo) => `<li>${todo.title}</li>`).join("");
+  ctx.body = todos.rows
+    .map(
+      (todo) =>
+        `<li hx-put="/todos/${todo.id}" hx-trigger="click" hx-swap="outerHTML">${todo.done ? "DONE" : "TODO"}: ${todo.title}</li>`,
+    )
+    .join("");
+});
+
+router.put("/todos/:id", async (ctx) => {
+  const { id } = ctx.params;
+  await pool.query("UPDATE todo SET done=true WHERE id=$1", [id]);
+
+  const res = await pool.query("SELECT * FROM todo WHERE id=$1", [id]);
+  const todo = res.rows[0];
+  ctx.type = "html";
+  ctx.body = `<li hx-put="/todos/${todo.id}" hx-trigger="click" hx-swap="outerHTML">${todo.done ? "DONE" : "TODO"}: ${todo.title}</li>`;
 });
 
 router.post("/todos", async (ctx) => {
@@ -79,10 +94,17 @@ router.post("/todos", async (ctx) => {
   }
 
   console.log(newTodo);
-  await pool.query("INSERT INTO todo(title) VALUES($1)", [newTodo]);
+  await pool.query("INSERT INTO todo(title, done) VALUES($1, false)", [
+    newTodo,
+  ]);
   const todos = await pool.query("SELECT * FROM todo");
   ctx.type = "html";
-  ctx.body = todos.rows.map((todo) => `<li>${todo.title}</li>`).join("");
+  ctx.body = todos.rows
+    .map(
+      (todo) =>
+        `<li hx-put="/todos/${todo.id}" hx-trigger="click" hx-swap="outerHTML">${todo.done ? "DONE" : "TODO"}: ${todo.title}</li>`,
+    )
+    .join("");
 });
 
 app

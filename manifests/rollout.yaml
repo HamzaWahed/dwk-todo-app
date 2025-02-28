@@ -3,7 +3,7 @@ kind: Rollout
 metadata:
   name: todo-app-dep
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: todo-app
