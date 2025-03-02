@@ -9,11 +9,14 @@ const fs = require("fs");
 const { writeFile, readFile } = fs.promises;
 const serve = require("koa-static");
 const bodyParser = require("koa-bodyparser");
+const { connect, JSONCodec } = require("nats");
 
 const app = new Koa();
 const router = new Router();
 const imagePath = path.join(__dirname, "img/image.jpg");
 const PORT = process.env.PORT || 3000;
+const nc = await connect({ servers: "nats://my-nats.io:4222" });
+const jc = JSONCodec();
 
 const pool = new Pool({
   user: process.env.USER,
@@ -73,7 +76,7 @@ router.get("/todos", async (ctx) => {
 router.put("/todos/:id", async (ctx) => {
   const { id } = ctx.params;
   await pool.query("UPDATE todo SET done=true WHERE id=$1", [id]);
-
+  nc.publish("todo_status", jc.encode({ status: "updated" }));
   const res = await pool.query("SELECT * FROM todo WHERE id=$1", [id]);
   const todo = res.rows[0];
   ctx.type = "html";
@@ -87,7 +90,6 @@ router.post("/todos", async (ctx) => {
       "Invalid todo title: Please limit title to be between 1 and 140 characters",
     );
     console.error("title:", newTodo);
-
     ctx.staus = 400;
     ctx.body = { error: "Todo title must be between 1 and 140 characters" };
     return;
@@ -97,6 +99,7 @@ router.post("/todos", async (ctx) => {
   await pool.query("INSERT INTO todo(title, done) VALUES($1, false)", [
     newTodo,
   ]);
+  nc.publish("todo_status", jc.encode({ status: "posted" }));
   const todos = await pool.query("SELECT * FROM todo");
   ctx.type = "html";
   ctx.body = todos.rows
