@@ -15,8 +15,8 @@ const app = new Koa();
 const router = new Router();
 const imagePath = path.join(__dirname, "img/image.jpg");
 const PORT = process.env.PORT || 3000;
-const nc = await connect({ servers: "nats://my-nats.io:4222" });
 const jc = JSONCodec();
+let nc;
 
 const pool = new Pool({
   user: process.env.USER,
@@ -25,6 +25,18 @@ const pool = new Pool({
   port: process.env.POSTGRES_PORT,
   database: process.env.DATABASE,
 });
+
+async function initNats() {
+  try {
+    nc = await connect({ servers: process.env.NATS_URL });
+    console.log("NATS connected successfully");
+  } catch (err) {
+    console.error("Failed to connect to NATS:", error);
+    process.exit(1); // Exit if we can't connect to NATS
+  }
+}
+
+initNats();
 
 downloadImage = async (url, filePath) => {
   try {
@@ -76,7 +88,11 @@ router.get("/todos", async (ctx) => {
 router.put("/todos/:id", async (ctx) => {
   const { id } = ctx.params;
   await pool.query("UPDATE todo SET done=true WHERE id=$1", [id]);
-  nc.publish("todo_status", jc.encode({ status: "updated" }));
+
+  const payload = jc.encode({ status: "updated", id: id });
+  nc.publish("todo_status", payload);
+  console.log(`Published status update for todo ${id}`);
+
   const res = await pool.query("SELECT * FROM todo WHERE id=$1", [id]);
   const todo = res.rows[0];
   ctx.type = "html";
@@ -99,7 +115,11 @@ router.post("/todos", async (ctx) => {
   await pool.query("INSERT INTO todo(title, done) VALUES($1, false)", [
     newTodo,
   ]);
-  nc.publish("todo_status", jc.encode({ status: "posted" }));
+
+  const payload = jc.encode({ status: "created" });
+  nc.publish("todo_status", payload);
+  console.log("Published status update for new todo");
+
   const todos = await pool.query("SELECT * FROM todo");
   ctx.type = "html";
   ctx.body = todos.rows

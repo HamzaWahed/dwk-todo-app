@@ -6,8 +6,7 @@ resources:
   - manifests/persistentvolumeclaim.yaml
   - manifests/service.yaml
   - manifests/ingress.yaml
-  - manifests/analysistemplate.yaml
-  - manifests/rollout.yaml
+  - manifests/deployment.yaml
 images:
   - name: PROJECT/IMAGE
-    newName: hzd454/todo-app:1.7.4
+    newName: hzd454/todo-app:1.8.5
