@@ -42,7 +42,7 @@ jobs:
             git add kustomization.yaml
             git commit -m "Update staging image to ${GITHUB_SHA}"
             git push origin
-          elif [[ "${GITHUB_REF}" = "refs/tags/*" ]]; then
+          elif [[ "${GITHUB_REF}" = refs/tags/* ]]; then
             cd manifests/overlays/prod
             kustomize edit set image PROJECT/IMAGE=hzd454/todo-app:${GITHUB_SHA}
             git add kustomization.yaml
