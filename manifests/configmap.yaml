@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: postgres-configmap
-data:
-  user: "postgres"
-  host: "postgres-svc"
-  database: "mydb"
-  port: "5432"

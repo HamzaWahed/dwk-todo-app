@@ -1,67 +1,54 @@
-name: Release todo application
+name: Build and release application
 
 on:
   push:
-  workflow_dispatch:
-
-env:
-  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: dwk-cluster
-  GKE_ZONE: europe-north1-b
-  IMAGE: todo
-  SERVICE: todo-app-dep
-  BRANCH: ${{ github.ref_name }}
 
 jobs:
-  build-deploy-publish:
-    name: Build, Deploy and Publish
+  build-publish:
     runs-on: ubuntu-latest
-    environment: Production
+    name: Build, Push, and Release
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - uses: google-github-actions/auth@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          credentials_json: "${{ secrets.GKE_SA_KEY }}"
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Build and publish image
+        run: docker build . -t hzd454/todo-app:$GITHUB_SHA --push
 
-      - name: Use gcloud CLI
-        run: gcloud info
-
-      - run: gcloud --quiet auth configure-docker
-
-      - name: Get GKE credentials
-        uses: google-github-actions/get-gke-credentials@v2
+      - name: Checkout manifests repository
+        uses: actions/checkout@v4
         with:
-          cluster_name: "${{ env.GKE_CLUSTER }}"
-          project_id: "${{ env.PROJECT_ID }}"
-          location: "${{ env.GKE_ZONE }}"
-
-      - name: Build
-        run: docker build . -t "gcr.io/$PROJECT_ID/$IMAGE:$BRANCH-$GITHUB_SHA"
-
-      - name: Publish
-        run: docker push "gcr.io/$PROJECT_ID/$IMAGE:$BRANCH-$GITHUB_SHA"
+          repository: HamzaWahed/dwk-todo-manifests
+          token: ${{ secrets.MANIFESTS_REPO_PAT }}
+          path: manifests
 
       - name: Set up Kustomize
-        uses: imranismail/setup-kustomize@v2.1.0
+        uses: imranismail/setup-kustomize@v2
 
-      - name: Deploy
-        run: |-
-          NAMESPACE=$BRANCH
-          if [ "$BRANCH" = "main" ]; then
-            NAMESPACE=default
+      - name: Update image tag, commit, and push
+        run: |
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ "${GITHUB_REF}" = "refs/heads/main" ]]; then
+            cd manifests/overlays/staging
+            kustomize edit set image PROJECT/IMAGE=hzd454/todo-app:${GITHUB_SHA}
+            git add kustomization.yaml
+            git commit -m "Update staging image to ${GITHUB_SHA}"
+            git push origin
+          elif [[ "${GITHUB_REF}" = "refs/tags/*" ]]; then
+            cd manifests/overlays/prod
+            kustomize edit set image PROJECT/IMAGE=hzd454/todo-app:${GITHUB_SHA}
+            git add kustomization.yaml
+            git commit -m "Update production image to ${GITHUB_SHA}"
+            git push origin
           else
-            kubectl create namespace $NAMESPACE || true
+            echo "Not a main branch push or tagged commit. Skipping update."
           fi
-
-          kubectl config set-context --current --namespace=$NAMESPACE
-          kustomize edit set namespace $NAMESPACE
-          kustomize edit set image PROJECT/IMAGE=gcr.io/$PROJECT_ID/$IMAGE:$BRANCH-$GITHUB_SHA
-          kustomize build . | kubectl apply -f -
-          kubectl rollout status deployment $SERVICE
-          kubectl get services -o wide
+        env:
+          GITHUB_TOKEN: ${{ secrets.MANIFESTS_REPO_PAT }}
