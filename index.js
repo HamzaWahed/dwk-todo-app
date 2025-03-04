@@ -65,7 +65,7 @@ router.get("/healthz", async (ctx) => {
     console.log("app is healthy");
   } catch (err) {
     ctx.status = 503;
-    console.log("app is not healthy");
+    console.log("app health check failed");
   }
 });
 

@@ -35,6 +35,7 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          echo $GITHUB_REF
           if [[ "${GITHUB_REF}" = "refs/heads/main" ]]; then
             cd manifests/overlays/staging
             kustomize edit set image PROJECT/IMAGE=hzd454/todo-app:${GITHUB_SHA}
